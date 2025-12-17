@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Stesa\CloudlinkerClient\Exceptions\AuthenticationException;
 use Stesa\CloudlinkerClient\Exceptions\CloudlinkerException;
 use Stesa\CloudlinkerClient\Exceptions\NotFoundException;
+use Stesa\CloudlinkerClient\Exceptions\QuotaExceededException;
 use Stesa\CloudlinkerClient\Exceptions\RateLimitException;
 use Stesa\CloudlinkerClient\Exceptions\ValidationException;
 use Stesa\CloudlinkerClient\Resources\ClientResource;
@@ -189,20 +190,49 @@ class CloudlinkerClient
         $response = $e->getResponse();
         $statusCode = $response->getStatusCode();
         $body = json_decode($response->getBody()->getContents(), true) ?? [];
+        $message = $body['message'] ?? '';
+
+        // Check for quota exceeded errors (400 with specific messages)
+        if ($statusCode === 400 && $this->isQuotaExceededMessage($message)) {
+            throw new QuotaExceededException($message);
+        }
 
         match ($statusCode) {
             401 => throw new AuthenticationException(),
-            404 => throw new NotFoundException($body['message'] ?? 'Resource not found.'),
+            404 => throw new NotFoundException($message ?: 'Resource not found.'),
             422 => throw new ValidationException(
-                $body['message'] ?? 'Validation failed.',
+                $message ?: 'Validation failed.',
                 $body['errors'] ?? []
             ),
             429 => throw new RateLimitException(
-                $body['message'] ?? 'Rate limit exceeded.',
+                $message ?: 'Rate limit exceeded.',
                 (int) ($response->getHeader('Retry-After')[0] ?? 60)
             ),
             default => throw CloudlinkerException::fromResponse($body, $statusCode),
         };
+    }
+
+    /**
+     * Check if an error message indicates a quota exceeded error.
+     */
+    protected function isQuotaExceededMessage(string $message): bool
+    {
+        $quotaPatterns = [
+            'maximum daily jobs reached',
+            'quota exceeded',
+            'limit reached',
+            'daily limit',
+        ];
+
+        $lowerMessage = strtolower($message);
+
+        foreach ($quotaPatterns as $pattern) {
+            if (str_contains($lowerMessage, $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

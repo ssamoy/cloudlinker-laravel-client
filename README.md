@@ -228,6 +228,7 @@ The package throws specific exceptions for different error types:
 use Stesa\CloudlinkerClient\Exceptions\AuthenticationException;
 use Stesa\CloudlinkerClient\Exceptions\CloudlinkerException;
 use Stesa\CloudlinkerClient\Exceptions\NotFoundException;
+use Stesa\CloudlinkerClient\Exceptions\QuotaExceededException;
 use Stesa\CloudlinkerClient\Exceptions\RateLimitException;
 use Stesa\CloudlinkerClient\Exceptions\ValidationException;
 
@@ -240,6 +241,8 @@ try {
     $errors = $e->getErrors();
 } catch (NotFoundException $e) {
     // Resource not found (404)
+} catch (QuotaExceededException $e) {
+    // Quota exceeded (e.g., maximum daily jobs reached)
 } catch (RateLimitException $e) {
     // Rate limit exceeded (429)
     $retryAfter = $e->getRetryAfter();
