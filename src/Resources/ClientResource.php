@@ -4,9 +4,7 @@ namespace Stesa\CloudlinkerClient\Resources;
 
 use Stesa\CloudlinkerClient\CloudlinkerClient;
 use Stesa\CloudlinkerClient\DTOs\Client;
-use Stesa\CloudlinkerClient\Events\ClientCreated;
 use Stesa\CloudlinkerClient\Events\ClientDeleted;
-use Stesa\CloudlinkerClient\Events\ClientUpdated;
 
 class ClientResource
 {
@@ -57,34 +55,6 @@ class ClientResource
         } while (isset($response['meta']['last_page']) && $page <= $response['meta']['last_page']);
 
         return $clients;
-    }
-
-    /**
-     * Create a new client.
-     */
-    public function create(array $data): Client
-    {
-        $response = $this->client->post('clients/create', $data);
-
-        $client = Client::fromArray($response['data'] ?? $response);
-
-        event(new ClientCreated($client));
-
-        return $client;
-    }
-
-    /**
-     * Update an existing client.
-     */
-    public function update(string $id, array $data): Client
-    {
-        $response = $this->client->post('clients/update', array_merge(['id' => $id], $data));
-
-        $client = Client::fromArray($response['data'] ?? $response);
-
-        event(new ClientUpdated($client));
-
-        return $client;
     }
 
     /**

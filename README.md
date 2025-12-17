@@ -42,25 +42,17 @@ use Stesa\CloudlinkerClient\Facades\Cloudlinker;
 // Test the connection
 Cloudlinker::test();
 
-// List all clients
+// List all clients (registered by Cloudlinker software)
 $clients = Cloudlinker::clients()->list();
 
 // Get all clients (auto-paginated)
 $allClients = Cloudlinker::clients()->all();
 
-// Create a client
-$client = Cloudlinker::clients()->create([
-    'name' => 'Office Client',
-    'hostname' => 'office-pc',
-]);
-
-// Update a client
-$client = Cloudlinker::clients()->update('uuid-here', [
-    'name' => 'Updated Name',
-]);
+// Filter clients by hostname
+$clients = Cloudlinker::clients()->list(hostname: 'office-pc');
 
 // Delete a client
-Cloudlinker::clients()->delete('uuid-here');
+Cloudlinker::clients()->delete('client-uuid');
 ```
 
 ### Working with Devices
@@ -69,18 +61,8 @@ Cloudlinker::clients()->delete('uuid-here');
 // List devices for a client
 $devices = Cloudlinker::devices()->list('client-uuid');
 
-// Create a device
-$device = Cloudlinker::devices()->create([
-    'client_id' => 'client-uuid',
-    'name' => 'Label Printer',
-    'type' => 'printer',
-    'driver' => 'escpos',
-]);
-
-// Update a device
-Cloudlinker::devices()->update('device-uuid', [
-    'name' => 'New Printer Name',
-]);
+// Get all devices for a client (auto-paginated)
+$allDevices = Cloudlinker::devices()->all('client-uuid');
 
 // Delete a device
 Cloudlinker::devices()->delete('device-uuid');
@@ -117,6 +99,9 @@ $job = Cloudlinker::jobs()->createAndLaunch([
     'type' => 'print',
     'source' => 'https://example.com/document.pdf',
 ]);
+
+// Delete a job
+Cloudlinker::jobs()->delete('job-uuid');
 ```
 
 ### Using Dependency Injection
@@ -145,14 +130,9 @@ The package dispatches events when API actions are performed:
 
 | Event | Description |
 |-------|-------------|
-| `ClientCreated` | Fired when a client is created |
-| `ClientUpdated` | Fired when a client is updated |
 | `ClientDeleted` | Fired when a client is deleted |
-| `DeviceCreated` | Fired when a device is created |
-| `DeviceUpdated` | Fired when a device is updated |
 | `DeviceDeleted` | Fired when a device is deleted |
 | `JobCreated` | Fired when a job is created |
-| `JobUpdated` | Fired when a job is updated |
 | `JobLaunched` | Fired when a job is launched |
 | `JobDeleted` | Fired when a job is deleted |
 

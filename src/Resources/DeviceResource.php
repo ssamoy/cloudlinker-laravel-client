@@ -4,9 +4,7 @@ namespace Stesa\CloudlinkerClient\Resources;
 
 use Stesa\CloudlinkerClient\CloudlinkerClient;
 use Stesa\CloudlinkerClient\DTOs\Device;
-use Stesa\CloudlinkerClient\Events\DeviceCreated;
 use Stesa\CloudlinkerClient\Events\DeviceDeleted;
-use Stesa\CloudlinkerClient\Events\DeviceUpdated;
 
 class DeviceResource
 {
@@ -55,34 +53,6 @@ class DeviceResource
         } while (isset($response['meta']['last_page']) && $page <= $response['meta']['last_page']);
 
         return $devices;
-    }
-
-    /**
-     * Create a new device.
-     */
-    public function create(array $data): Device
-    {
-        $response = $this->client->post('devices/create', $data);
-
-        $device = Device::fromArray($response['data'] ?? $response);
-
-        event(new DeviceCreated($device));
-
-        return $device;
-    }
-
-    /**
-     * Update an existing device.
-     */
-    public function update(string $id, array $data): Device
-    {
-        $response = $this->client->post('devices/update', array_merge(['id' => $id], $data));
-
-        $device = Device::fromArray($response['data'] ?? $response);
-
-        event(new DeviceUpdated($device));
-
-        return $device;
     }
 
     /**

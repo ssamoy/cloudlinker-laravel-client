@@ -7,7 +7,6 @@ use Stesa\CloudlinkerClient\DTOs\Job;
 use Stesa\CloudlinkerClient\Events\JobCreated;
 use Stesa\CloudlinkerClient\Events\JobDeleted;
 use Stesa\CloudlinkerClient\Events\JobLaunched;
-use Stesa\CloudlinkerClient\Events\JobUpdated;
 
 class JobResource
 {
@@ -71,20 +70,6 @@ class JobResource
         $job = Job::fromArray($response['data'] ?? $response);
 
         event(new JobCreated($job));
-
-        return $job;
-    }
-
-    /**
-     * Update an existing job.
-     */
-    public function update(string $id, array $data): Job
-    {
-        $response = $this->client->post('jobs/update', array_merge(['id' => $id], $data));
-
-        $job = Job::fromArray($response['data'] ?? $response);
-
-        event(new JobUpdated($job));
 
         return $job;
     }
