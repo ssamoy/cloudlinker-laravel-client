@@ -3,11 +3,14 @@
 namespace Stesa\CloudlinkerClient\Resources;
 
 use Stesa\CloudlinkerClient\CloudlinkerClient;
+use Stesa\CloudlinkerClient\Concerns\DispatchesEvents;
 use Stesa\CloudlinkerClient\DTOs\Device;
 use Stesa\CloudlinkerClient\Events\DeviceDeleted;
 
 class DeviceResource
 {
+    use DispatchesEvents;
+
     public function __construct(
         protected CloudlinkerClient $client
     ) {
@@ -65,7 +68,7 @@ class DeviceResource
         $success = ($response['success'] ?? false) === true;
 
         if ($success) {
-            event(new DeviceDeleted($id));
+            $this->dispatchEvent(new DeviceDeleted($id));
         }
 
         return $success;

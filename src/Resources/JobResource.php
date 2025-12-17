@@ -3,6 +3,7 @@
 namespace Stesa\CloudlinkerClient\Resources;
 
 use Stesa\CloudlinkerClient\CloudlinkerClient;
+use Stesa\CloudlinkerClient\Concerns\DispatchesEvents;
 use Stesa\CloudlinkerClient\DTOs\Job;
 use Stesa\CloudlinkerClient\Events\JobCreated;
 use Stesa\CloudlinkerClient\Events\JobDeleted;
@@ -10,6 +11,8 @@ use Stesa\CloudlinkerClient\Events\JobLaunched;
 
 class JobResource
 {
+    use DispatchesEvents;
+
     public function __construct(
         protected CloudlinkerClient $client
     ) {
@@ -69,7 +72,7 @@ class JobResource
 
         $job = Job::fromArray($response['data'] ?? $response);
 
-        event(new JobCreated($job));
+        $this->dispatchEvent(new JobCreated($job));
 
         return $job;
     }
@@ -79,11 +82,11 @@ class JobResource
      */
     public function launch(string $id): Job
     {
-        $response = $this->client->post('jobs/launch', ['id' => $id]);
+        $response = $this->client->post('jobs/launch', ['job_id' => $id]);
 
         $job = Job::fromArray($response['data'] ?? $response);
 
-        event(new JobLaunched($job));
+        $this->dispatchEvent(new JobLaunched($job));
 
         return $job;
     }
@@ -93,12 +96,12 @@ class JobResource
      */
     public function delete(string $id): bool
     {
-        $response = $this->client->post('jobs/delete', ['id' => $id]);
+        $response = $this->client->post('jobs/delete', ['job_id' => $id]);
 
         $success = ($response['success'] ?? false) === true;
 
         if ($success) {
-            event(new JobDeleted($id));
+            $this->dispatchEvent(new JobDeleted($id));
         }
 
         return $success;

@@ -8,13 +8,8 @@ class Device
         public readonly ?string $id = null,
         public readonly ?string $clientId = null,
         public readonly ?string $name = null,
-        public readonly ?string $type = null,
-        public readonly ?string $driver = null,
-        public readonly ?string $connection = null,
-        public readonly ?array $settings = null,
-        public readonly ?string $status = null,
-        public readonly ?string $createdAt = null,
-        public readonly ?string $updatedAt = null,
+        public readonly ?string $hardwarePath = null,
+        public readonly ?array $additionalInfo = null,
     ) {
     }
 
@@ -24,13 +19,8 @@ class Device
             id: $data['id'] ?? null,
             clientId: $data['client_id'] ?? null,
             name: $data['name'] ?? null,
-            type: $data['type'] ?? null,
-            driver: $data['driver'] ?? null,
-            connection: $data['connection'] ?? null,
-            settings: $data['settings'] ?? null,
-            status: $data['status'] ?? null,
-            createdAt: $data['created_at'] ?? null,
-            updatedAt: $data['updated_at'] ?? null,
+            hardwarePath: $data['hardware_path'] ?? null,
+            additionalInfo: $data['additional_info'] ?? null,
         );
     }
 
@@ -40,28 +30,8 @@ class Device
             'id' => $this->id,
             'client_id' => $this->clientId,
             'name' => $this->name,
-            'type' => $this->type,
-            'driver' => $this->driver,
-            'connection' => $this->connection,
-            'settings' => $this->settings,
-            'status' => $this->status,
-            'created_at' => $this->createdAt,
-            'updated_at' => $this->updatedAt,
+            'hardware_path' => $this->hardwarePath,
+            'additional_info' => $this->additionalInfo,
         ], fn ($value) => $value !== null);
-    }
-
-    public function isPrinter(): bool
-    {
-        return $this->type === 'printer';
-    }
-
-    public function isScanner(): bool
-    {
-        return $this->type === 'scanner';
-    }
-
-    public function isScale(): bool
-    {
-        return $this->type === 'scale';
     }
 }

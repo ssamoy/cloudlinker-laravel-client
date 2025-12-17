@@ -3,11 +3,14 @@
 namespace Stesa\CloudlinkerClient\Resources;
 
 use Stesa\CloudlinkerClient\CloudlinkerClient;
+use Stesa\CloudlinkerClient\Concerns\DispatchesEvents;
 use Stesa\CloudlinkerClient\DTOs\Client;
 use Stesa\CloudlinkerClient\Events\ClientDeleted;
 
 class ClientResource
 {
+    use DispatchesEvents;
+
     public function __construct(
         protected CloudlinkerClient $client
     ) {
@@ -67,7 +70,7 @@ class ClientResource
         $success = ($response['success'] ?? false) === true;
 
         if ($success) {
-            event(new ClientDeleted($id));
+            $this->dispatchEvent(new ClientDeleted($id));
         }
 
         return $success;

@@ -24,27 +24,47 @@ class CloudlinkerClient
 
     protected string $apiKey;
 
+    protected int $timeout;
+
     protected ?ClientResource $clientResource = null;
 
     protected ?DeviceResource $deviceResource = null;
 
     protected ?JobResource $jobResource = null;
 
-    public function __construct(?string $organisationId = null, ?string $apiKey = null, ?string $baseUrl = null)
+    public function __construct(?string $organisationId = null, ?string $apiKey = null, ?string $baseUrl = null, ?int $timeout = null)
     {
-        $this->organisationId = $organisationId ?? config('cloudlinker.organisation_id');
-        $this->apiKey = $apiKey ?? config('cloudlinker.api_key');
-        $this->baseUrl = rtrim($baseUrl ?? config('cloudlinker.base_url', 'https://cloudlinker.eu/api'), '/');
+        $this->organisationId = $organisationId ?? $this->getConfig('cloudlinker.organisation_id', '');
+        $this->apiKey = $apiKey ?? $this->getConfig('cloudlinker.api_key', '');
+        $this->baseUrl = rtrim($baseUrl ?? $this->getConfig('cloudlinker.base_url', 'https://cloudlinker.eu/api'), '/');
+        $this->timeout = $timeout ?? $this->getConfig('cloudlinker.timeout', 30);
 
         $this->httpClient = new Client([
             'base_uri' => $this->baseUrl . '/',
-            'timeout' => config('cloudlinker.timeout', 30),
+            'timeout' => $this->timeout,
             'auth' => [$this->organisationId, $this->apiKey],
             'headers' => [
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ],
         ]);
+    }
+
+    /**
+     * Get a configuration value, with Laravel fallback support.
+     */
+    protected function getConfig(string $key, mixed $default = null): mixed
+    {
+        // Check if Laravel's config helper is available
+        if (function_exists('config') && function_exists('app')) {
+            try {
+                return config($key, $default);
+            } catch (\Throwable) {
+                // Laravel not fully booted, use default
+            }
+        }
+
+        return $default;
     }
 
     /**
@@ -56,7 +76,8 @@ class CloudlinkerClient
     {
         $response = $this->get('test');
 
-        return isset($response['success']) && $response['success'] === true;
+        // API returns organization_id on success
+        return isset($response['organization_id']) && !empty($response['organization_id']);
     }
 
     /**
