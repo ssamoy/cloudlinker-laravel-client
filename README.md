@@ -71,37 +71,52 @@ Cloudlinker::devices()->delete('device-uuid');
 ### Working with Jobs
 
 ```php
-// List all jobs
-$jobs = Cloudlinker::jobs()->list();
-
-// List jobs for a specific device
-$jobs = Cloudlinker::jobs()->list(deviceId: 'device-uuid');
-
-// Filter by status
-$pendingJobs = Cloudlinker::jobs()->list(status: 'pending');
-
 // Create a print job
 $job = Cloudlinker::jobs()->create([
+    'client_id' => 'client-uuid',
     'device_id' => 'device-uuid',
-    'type' => 'print',
-    'source' => 'https://example.com/document.pdf',
-    'options' => [
-        'copies' => 2,
-    ],
+    'job_type' => 1, // 1 = PRINTJOB
+    'payload' => json_encode([
+        'document_type' => 'pdf',
+        'document_url' => 'https://example.com/document.pdf',
+        'copies' => 1,
+    ]),
 ]);
 
 // Launch a job
 $job = Cloudlinker::jobs()->launch('job-uuid');
 
 // Create and immediately launch a job
-$job = Cloudlinker::jobs()->createAndLaunch([
+$job = Cloudlinker::jobs()->create([
+    'client_id' => 'client-uuid',
     'device_id' => 'device-uuid',
-    'type' => 'print',
-    'source' => 'https://example.com/document.pdf',
+    'job_type' => 1,
+    'payload' => json_encode([
+        'document_type' => 'pdf',
+        'document_url' => 'https://example.com/document.pdf',
+        'copies' => 1,
+    ]),
+    'launch_immediately' => true,
 ]);
 
 // Delete a job
 Cloudlinker::jobs()->delete('job-uuid');
+```
+
+### Job Types
+
+| Type | Value | Description |
+|------|-------|-------------|
+| PRINTJOB | `1` | Print a PDF document |
+
+### Payload for Print Jobs
+
+```php
+$payload = json_encode([
+    'document_type' => 'pdf',       // Required: document type
+    'document_url' => 'https://...', // Required: URL to the document
+    'copies' => 1,                   // Required: number of copies
+]);
 ```
 
 ### Using Dependency Injection
@@ -113,10 +128,20 @@ class PrintController extends Controller
 {
     public function print(CloudlinkerClient $cloudlinker)
     {
-        $job = $cloudlinker->jobs()->createAndLaunch([
-            'device_id' => 'device-uuid',
-            'type' => 'print',
-            'source' => 'https://example.com/invoice.pdf',
+        // Get the first available client and device
+        $clients = $cloudlinker->clients()->all();
+        $devices = $cloudlinker->devices()->all($clients[0]->id);
+
+        $job = $cloudlinker->jobs()->create([
+            'client_id' => $clients[0]->id,
+            'device_id' => $devices[0]->id,
+            'job_type' => 1,
+            'payload' => json_encode([
+                'document_type' => 'pdf',
+                'document_url' => 'https://example.com/invoice.pdf',
+                'copies' => 1,
+            ]),
+            'launch_immediately' => true,
         ]);
 
         return response()->json(['job_id' => $job->id]);
@@ -171,17 +196,28 @@ use Stesa\CloudlinkerClient\DTOs\Client;
 use Stesa\CloudlinkerClient\DTOs\Device;
 use Stesa\CloudlinkerClient\DTOs\Job;
 
-// DTOs have helpful methods
-$client->isOnline();
+// Client properties
+$client->id;
+$client->hostname;
+$client->description;
+$client->ipAddress;
+$client->lastSeen;
+$client->isOnline(); // true if last_seen is within 5 minutes
 
-$device->isPrinter();
-$device->isScanner();
-$device->isScale();
+// Device properties
+$device->id;
+$device->clientId;
+$device->name;
+$device->hardwarePath;
+$device->additionalInfo;
 
-$job->isPending();
-$job->isProcessing();
-$job->isCompleted();
-$job->isFailed();
+// Job properties
+$job->id;
+$job->clientId;
+$job->deviceId;
+$job->jobType;
+$job->status;
+$job->payload;
 ```
 
 ## Exception Handling
