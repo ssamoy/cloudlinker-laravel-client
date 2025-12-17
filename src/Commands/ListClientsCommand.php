@@ -42,14 +42,15 @@ class ListClientsCommand extends Command
 
             $rows = array_map(fn ($c) => [
                 $c->id,
-                $c->name,
                 $c->hostname,
-                $c->status,
+                $c->description,
+                $c->ipAddress,
+                $c->isOnline() ? 'Online' : 'Offline',
                 $c->lastSeen,
             ], $clients);
 
             $this->table(
-                ['ID', 'Name', 'Hostname', 'Status', 'Last Seen'],
+                ['ID', 'Hostname', 'Description', 'IP Address', 'Status', 'Last Seen'],
                 $rows
             );
 
