@@ -11,20 +11,18 @@ class ClientTest extends TestCase
     {
         $data = [
             'id' => '550e8400-e29b-41d4-a716-446655440000',
-            'name' => 'Test Client',
             'hostname' => 'test-host',
-            'status' => 'online',
+            'description' => 'Test Client Description',
+            'ip_address' => '192.168.1.100',
             'last_seen' => '2024-01-15 10:00:00',
-            'created_at' => '2024-01-01 00:00:00',
-            'updated_at' => '2024-01-15 10:00:00',
         ];
 
         $client = Client::fromArray($data);
 
         $this->assertEquals('550e8400-e29b-41d4-a716-446655440000', $client->id);
-        $this->assertEquals('Test Client', $client->name);
         $this->assertEquals('test-host', $client->hostname);
-        $this->assertEquals('online', $client->status);
+        $this->assertEquals('Test Client Description', $client->description);
+        $this->assertEquals('192.168.1.100', $client->ipAddress);
         $this->assertEquals('2024-01-15 10:00:00', $client->lastSeen);
     }
 
@@ -32,29 +30,38 @@ class ClientTest extends TestCase
     {
         $client = new Client(
             id: '550e8400-e29b-41d4-a716-446655440000',
-            name: 'Test Client',
             hostname: 'test-host',
-            status: 'online',
+            description: 'Test Description',
+            ipAddress: '192.168.1.100',
         );
 
         $array = $client->toArray();
 
         $this->assertEquals('550e8400-e29b-41d4-a716-446655440000', $array['id']);
-        $this->assertEquals('Test Client', $array['name']);
         $this->assertEquals('test-host', $array['hostname']);
-        $this->assertEquals('online', $array['status']);
+        $this->assertEquals('Test Description', $array['description']);
+        $this->assertEquals('192.168.1.100', $array['ip_address']);
     }
 
-    public function test_is_online_returns_true_when_status_is_online(): void
+    public function test_is_online_returns_true_when_last_seen_is_recent(): void
     {
-        $client = new Client(status: 'online');
+        $recentTime = (new \DateTime())->modify('-2 minutes')->format('Y-m-d H:i:s');
+        $client = new Client(lastSeen: $recentTime);
 
         $this->assertTrue($client->isOnline());
     }
 
-    public function test_is_online_returns_false_when_status_is_offline(): void
+    public function test_is_online_returns_false_when_last_seen_is_old(): void
     {
-        $client = new Client(status: 'offline');
+        $oldTime = (new \DateTime())->modify('-10 minutes')->format('Y-m-d H:i:s');
+        $client = new Client(lastSeen: $oldTime);
+
+        $this->assertFalse($client->isOnline());
+    }
+
+    public function test_is_online_returns_false_when_last_seen_is_null(): void
+    {
+        $client = new Client(lastSeen: null);
 
         $this->assertFalse($client->isOnline());
     }
