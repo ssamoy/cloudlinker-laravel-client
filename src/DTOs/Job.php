@@ -26,6 +26,7 @@ class Job
         public readonly ?array $result = null,
         public readonly ?string $error = null,
         public readonly ?string $createdAt = null,
+        public readonly ?string $executedAt = null,
         public readonly ?string $updatedAt = null,
     ) {
     }
@@ -61,6 +62,7 @@ class Job
             result: is_array($result) ? $result : null,
             error: $data['error'] ?? null,
             createdAt: $data['created_at'] ?? null,
+            executedAt: $data['executed_at'] ?? null,
             updatedAt: $data['updated_at'] ?? null,
         );
     }
@@ -78,6 +80,7 @@ class Job
             'result' => $this->result,
             'error' => $this->error,
             'created_at' => $this->createdAt,
+            'executed_at' => $this->executedAt,
             'updated_at' => $this->updatedAt,
         ], fn ($value) => $value !== null);
     }
@@ -165,10 +168,42 @@ class Job
 
     /**
      * Get the HTTP response body from the result (for HTTP_COMMAND jobs).
+     * Returns the response as a string (JSON encoded if it was an object).
      */
     public function getHttpResult(): ?string
     {
-        return $this->result['http_result'] ?? null;
+        $result = $this->result['http_result'] ?? null;
+
+        if ($result === null) {
+            return null;
+        }
+
+        if (is_array($result)) {
+            return json_encode($result, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        }
+
+        return (string) $result;
+    }
+
+    /**
+     * Get the HTTP response as an array (for HTTP_COMMAND jobs).
+     * Useful when the response is JSON.
+     */
+    public function getHttpResultArray(): ?array
+    {
+        $result = $this->result['http_result'] ?? null;
+
+        if ($result === null) {
+            return null;
+        }
+
+        if (is_array($result)) {
+            return $result;
+        }
+
+        // Try to decode JSON string
+        $decoded = json_decode($result, true);
+        return json_last_error() === JSON_ERROR_NONE ? $decoded : null;
     }
 
     /**
