@@ -6,16 +6,16 @@
  * Run this in your Laravel application:
  * php artisan tinker < examples/test-with-credentials.php
  *
- * Or configure these in your .env file:
- * CLOUDLINKER_ORG_ID=0197f098-408f-7082-8519-3d340d852ef3
+ * Configure these in your .env file:
+ * CLOUDLINKER_ORG_ID=your-organisation-id
  * CLOUDLINKER_API_KEY=your-api-key
  */
 
 use Stesa\CloudlinkerClient\Facades\Cloudlinker;
 
-// Your test credentials
-$clientId = '019b2336-f721-70d9-bb72-ed0c97790328';
-$organizationId = '0197f098-408f-7082-8519-3d340d852ef3';
+// Replace with your actual credentials
+$clientId = 'your-client-id';
+$organizationId = 'your-organisation-id';
 
 echo "╔══════════════════════════════════════════════════════════════╗\n";
 echo "║              Cloudlinker API Test                            ║\n";
