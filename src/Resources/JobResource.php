@@ -159,45 +159,48 @@ class JobResource
         ?string $webhookUrl = null,
         ?string $webhookMethod = null
     ): Job {
-        $data = [
-            'client_id' => $clientId,
-            'job_type' => 2,  // 2 = HTTP_COMMAND
+        // Build payload with HTTP_COMMAND specific fields
+        $payload = [
             'http_target_url' => $targetUrl,
             'http_method' => strtoupper($method),
         ];
 
         if ($headers !== null) {
-            $data['http_headers'] = $headers;
+            $payload['http_headers'] = $headers;
         }
 
         if ($parameters !== null) {
-            $data['http_parameters'] = $parameters;
+            $payload['http_parameters'] = $parameters;
         }
 
         if ($authentication !== null) {
-            $data['http_authentication'] = $authentication;
+            $payload['http_authentication'] = $authentication;
 
             if ($authentication === 'basic') {
                 if ($username !== null) {
-                    $data['http_username'] = $username;
+                    $payload['http_username'] = $username;
                 }
                 if ($password !== null) {
-                    $data['http_password'] = $password;
+                    $payload['http_password'] = $password;
                 }
             } elseif ($authentication === 'bearer' && $bearerToken !== null) {
-                $data['http_bearer_token'] = $bearerToken;
+                $payload['http_bearer_token'] = $bearerToken;
             }
         }
 
         if ($webhookUrl !== null) {
-            $data['http_callback_method'] = 'webhook';
-            $data['http_webhook_url'] = $webhookUrl;
+            $payload['http_callback_method'] = 'webhook';
+            $payload['http_webhook_url'] = $webhookUrl;
             if ($webhookMethod !== null) {
-                $data['http_webhook_method'] = strtoupper($webhookMethod);
+                $payload['http_webhook_method'] = strtoupper($webhookMethod);
             }
         }
 
-        return $this->create($data);
+        return $this->create([
+            'client_id' => $clientId,
+            'job_type' => 2,  // 2 = HTTP_COMMAND
+            'payload' => json_encode($payload),
+        ]);
     }
 
     /**

@@ -113,18 +113,20 @@ try {
     $job = Cloudlinker::jobs()->create([
         'client_id' => $clientId,
         'job_type' => 2,  // 2 = HTTP_COMMAND
-        'http_target_url' => 'https://httpbin.org/anything',
-        'http_method' => 'POST',
-        'http_headers' => [
-            'Content-Type' => 'application/json',
-            'X-Request-ID' => uniqid(),
-        ],
-        'http_parameters' => [
-            'action' => 'test',
-            'timestamp' => time(),
-        ],
-        'http_authentication' => 'bearer',
-        'http_bearer_token' => 'my-secret-token',
+        'payload' => json_encode([
+            'http_target_url' => 'https://httpbin.org/anything',
+            'http_method' => 'POST',
+            'http_headers' => [
+                'Content-Type' => 'application/json',
+                'X-Request-ID' => uniqid(),
+            ],
+            'http_parameters' => [
+                'action' => 'test',
+                'timestamp' => time(),
+            ],
+            'http_authentication' => 'bearer',
+            'http_bearer_token' => 'my-secret-token',
+        ]),
     ]);
 
     $job = Cloudlinker::jobs()->launch($job->id);

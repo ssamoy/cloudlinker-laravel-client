@@ -180,15 +180,17 @@ $job = Cloudlinker::jobs()->createAndLaunchHttpCommand(
 $job = Cloudlinker::jobs()->create([
     'client_id' => 'client-uuid',
     'job_type' => 2,  // 2 = HTTP_COMMAND
-    'http_target_url' => 'https://api.example.com/webhook',
-    'http_method' => 'POST',
-    'http_headers' => ['Content-Type' => 'application/json'],
-    'http_parameters' => ['key' => 'value'],
-    'http_authentication' => 'bearer',
-    'http_bearer_token' => 'your-token',
-    'http_callback_method' => 'webhook',
-    'http_webhook_url' => 'https://your-app.com/callback',
-    'http_webhook_method' => 'POST',
+    'payload' => json_encode([
+        'http_target_url' => 'https://api.example.com/webhook',
+        'http_method' => 'POST',
+        'http_headers' => ['Content-Type' => 'application/json'],
+        'http_parameters' => ['key' => 'value'],
+        'http_authentication' => 'bearer',
+        'http_bearer_token' => 'your-token',
+        'http_callback_method' => 'webhook',
+        'http_webhook_url' => 'https://your-app.com/callback',
+        'http_webhook_method' => 'POST',
+    ]),
 ]);
 ```
 
