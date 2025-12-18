@@ -3,6 +3,7 @@
 namespace Stesa\CloudlinkerClient;
 
 use Illuminate\Support\ServiceProvider;
+use Stesa\CloudlinkerClient\Commands\HttpCommandTestCommand;
 use Stesa\CloudlinkerClient\Commands\ListClientsCommand;
 use Stesa\CloudlinkerClient\Commands\TestConnectionCommand;
 
@@ -42,6 +43,7 @@ class CloudlinkerServiceProvider extends ServiceProvider
             $this->commands([
                 TestConnectionCommand::class,
                 ListClientsCommand::class,
+                HttpCommandTestCommand::class,
             ]);
         }
     }

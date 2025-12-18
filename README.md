@@ -107,16 +107,109 @@ Cloudlinker::jobs()->delete('job-uuid');
 
 | Type | Value | Description |
 |------|-------|-------------|
-| PRINTJOB | `1` | Print a PDF document |
+| PRINT | `print` | Print a PDF document to a printer |
+| HTTP_COMMAND | `http_command` | Execute an HTTP request from the client machine |
 
-### Payload for Print Jobs
+### Print Jobs
 
 ```php
-$payload = json_encode([
-    'document_type' => 'pdf',       // Required: document type
-    'document_url' => 'https://...', // Required: URL to the document
-    'copies' => 1,                   // Required: number of copies
+$job = Cloudlinker::jobs()->createAndLaunch([
+    'device_id' => 'device-uuid',
+    'type' => 'print',
+    'source' => 'https://example.com/document.pdf',
+    'options' => [
+        'copies' => 1,
+    ],
 ]);
+```
+
+### HTTP_COMMAND Jobs
+
+HTTP_COMMAND jobs execute HTTP requests from the Cloudlinker client machine, allowing access to internal network resources that may not be accessible from the internet.
+
+```php
+// Simple GET request
+$job = Cloudlinker::jobs()->createAndLaunchHttpCommand(
+    clientId: 'client-uuid',
+    targetUrl: 'https://internal-api.local/status',
+    method: 'GET'
+);
+
+// POST request with parameters
+$job = Cloudlinker::jobs()->createAndLaunchHttpCommand(
+    clientId: 'client-uuid',
+    targetUrl: 'https://internal-api.local/webhook',
+    method: 'POST',
+    parameters: [
+        'event' => 'order_created',
+        'order_id' => '12345',
+    ]
+);
+
+// Request with Bearer authentication
+$job = Cloudlinker::jobs()->createAndLaunchHttpCommand(
+    clientId: 'client-uuid',
+    targetUrl: 'https://api.example.com/data',
+    method: 'GET',
+    authentication: 'bearer',
+    bearerToken: 'your-api-token'
+);
+
+// Request with Basic authentication
+$job = Cloudlinker::jobs()->createAndLaunchHttpCommand(
+    clientId: 'client-uuid',
+    targetUrl: 'https://secure-api.local/endpoint',
+    method: 'POST',
+    authentication: 'basic',
+    username: 'user',
+    password: 'secret'
+);
+
+// Request with custom headers
+$job = Cloudlinker::jobs()->createAndLaunchHttpCommand(
+    clientId: 'client-uuid',
+    targetUrl: 'https://api.example.com/data',
+    method: 'GET',
+    headers: [
+        'X-Custom-Header' => 'value',
+        'Accept' => 'application/json',
+    ]
+);
+
+// Full control with raw create method
+$job = Cloudlinker::jobs()->create([
+    'client_id' => 'client-uuid',
+    'job_type' => 2,  // 2 = HTTP_COMMAND
+    'http_target_url' => 'https://api.example.com/webhook',
+    'http_method' => 'POST',
+    'http_headers' => ['Content-Type' => 'application/json'],
+    'http_parameters' => ['key' => 'value'],
+    'http_authentication' => 'bearer',
+    'http_bearer_token' => 'your-token',
+    'http_callback_method' => 'webhook',
+    'http_webhook_url' => 'https://your-app.com/callback',
+    'http_webhook_method' => 'POST',
+]);
+```
+
+#### Reading HTTP_COMMAND Results
+
+```php
+// Check job completion
+if ($job->isCompleted()) {
+    // Get HTTP response details
+    $statusCode = $job->getHttpStatus();      // e.g., 200
+    $responseBody = $job->getHttpResult();    // Response body as string
+
+    // Check if request was successful (2xx status)
+    if ($job->isHttpSuccess()) {
+        echo "Request succeeded!";
+    }
+
+    // If webhook was configured
+    $webhookStatus = $job->getWebhookHttpStatus();
+    $webhookResult = $job->getWebhookHttpResult();
+}
 ```
 
 ### Using Dependency Injection
@@ -185,6 +278,26 @@ php artisan cloudlinker:clients
 
 # Filter clients by hostname
 php artisan cloudlinker:clients --hostname=office
+
+# Test an HTTP_COMMAND job (uses first available client)
+php artisan cloudlinker:http-test https://httpbin.org/get
+
+# HTTP_COMMAND with specific client
+php artisan cloudlinker:http-test https://httpbin.org/get --client=client-uuid
+
+# HTTP_COMMAND with POST method
+php artisan cloudlinker:http-test https://httpbin.org/post --method=POST
+
+# HTTP_COMMAND with Bearer token
+php artisan cloudlinker:http-test https://api.example.com/data --bearer=your-token
+
+# HTTP_COMMAND with custom headers and parameters
+php artisan cloudlinker:http-test https://api.example.com/endpoint \
+    --method=POST \
+    --header="Content-Type: application/json" \
+    --header="X-Custom: value" \
+    --param="key=value" \
+    --param="another=param"
 ```
 
 ## DTOs
@@ -215,9 +328,34 @@ $device->additionalInfo;
 $job->id;
 $job->clientId;
 $job->deviceId;
-$job->jobType;
-$job->status;
-$job->payload;
+$job->deviceName;
+$job->jobType;              // Job::TYPE_PRINT (1) or Job::TYPE_HTTP_COMMAND (2)
+$job->statusCode;           // Job::STATUS_CREATED (1) through STATUS_FAILED (5)
+$job->payload;              // Parsed job payload as array
+$job->result;               // Parsed result as array
+$job->error;
+$job->createdAt;
+
+// Job status helpers
+$job->isCreated();
+$job->isLaunched();
+$job->isPending();
+$job->isProcessing();       // true if launched or pending
+$job->isCompleted();
+$job->isFailed();
+$job->getStatusName();      // 'created', 'launched', 'pending', 'completed', 'failed'
+
+// Job type helpers
+$job->isPrintJob();
+$job->isHttpCommand();
+$job->getTypeName();        // 'print' or 'http_command'
+
+// HTTP_COMMAND result helpers
+$job->getHttpStatus();         // HTTP status code (e.g., 200)
+$job->getHttpResult();         // Response body
+$job->isHttpSuccess();         // true if status 2xx
+$job->getWebhookHttpStatus();  // Webhook callback status
+$job->getWebhookHttpResult();  // Webhook callback response
 ```
 
 ## Exception Handling
